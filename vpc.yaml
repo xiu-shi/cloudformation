@@ -1,3 +1,7 @@
+###
+
+#My copy
+
 # CloudFomration template for VPC
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "CloudFormation template for VPC"
@@ -13,12 +17,12 @@ Resources:
         - Key: "Name"
           Value: "MyVPC"
 
-  #Public Subnet 1A, AZ1
-  PublicSubnet1A:
+  #Public Subnet , AZ1
+  PublicSubnet2A:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref MyVPC
-      CidrBlock: "172.16.0.0/24"
+      CidrBlock: "172.17.0.0/24"
       AvailabilityZone: !Select [0, !GetAZs ""]
       MapPublicIpOnLaunch: true
       Tags:
@@ -114,19 +118,19 @@ Resources:
       DestinationCidrBlock: "0.0.0.0/0"
       GatewayId: !Ref InternetGateway
 
-  # Public Subnet 1A Route Table Association
+  # Public Subnet Association
   PublicSubnet1ARouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
-      SubnetId: !Ref PublicSubnet1A
+      SubnetId: !Ref PublicSubnet2A
       RouteTableId: !Ref PublicRouteTable
 
-  # Public Subnet 2B Route Table Association
-  PublicSubnet2BRouteTableAssociation:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties:
-      SubnetId: !Ref PublicSubnet2B
-      RouteTableId: !Ref PublicRouteTable
+  ##* Public Subnet 2B Route Table Association
+  #*PublicSubnet2BRouteTableAssociation:
+  #*Type: "AWS::EC2::SubnetRouteTableAssociation"
+  #*Properties:
+  #*SubnetId: !Ref PublicSubnet2B
+  #*RouteTableId: !Ref PublicRouteTable
 
   # Bastion Host Stack Logical Resource
   BastionStack:
@@ -135,21 +139,73 @@ Resources:
       InstanceType: "t2.micro"
       KeyName: bastion_key_pair # your EC2 key pair name
       ImageId: ami-0fab1b527ffa9b942
-      SubnetId: !Ref PublicSubnet1A
+      #* PublicSubnet 2A
+      SubnetId: !Ref PublicSubnet2A
       SecurityGroupIds:
         - !Ref BastionSecurityGroup
       Tags:
         - Key: "Name"
           Value: "BastionHost"
 
-  # Bastion Security Group
+  # Bastion Security Group Logical Resource
   BastionSecurityGroup:
     Type: "AWS::EC2::SecurityGroup"
     Properties:
-      GroupDescription: "Enable SSH"
+      GroupDescription: "Enable SSH access"
       VpcId: !Ref MyVPC
       SecurityGroupIngress:
         - IpProtocol: "tcp"
           FromPort: 22
           ToPort: 22
           CidrIp: "86.45.99.68/32" # Your IP address
+
+  # AppInstance1A
+  AppInstance1A:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: "t2.micro"
+      KeyName: bastion_key_pair # your EC2 key pair name
+      ImageId: ami-0fab1b527ffa9b942
+      SubnetId: !Ref AppPrivateSubnet1A
+      SecurityGroupIds:
+        - !Ref AppInstance1ASG
+      Tags:
+        - Key: Name
+          Value: App1
+
+  # AppInstance2B
+  AppInstance2B:
+    Type: "AWS::EC2::Instance"
+    Properties:
+      InstanceType: "t2.micro"
+      ImageId: ami-0fab1b527ffa9b942
+      SubnetId: !Ref AppPrivateSubnet2B
+      SecurityGroupIds:
+        - !Ref AppInstance2BSG
+      Tags:
+        - Key: Name
+          Value: App2
+
+  # SG App 1A
+  AppInstance1ASG:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Allow SSH from Bastion"
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !Ref BastionSecurityGroup
+
+  # SG App 2B
+  AppInstance2BSG:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Allow ICMP Ping from APp1"
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: icmp
+          FromPort: -1
+          ToPort: -1
+          SourceSecurityGroupId: !Ref AppInstance1ASG
