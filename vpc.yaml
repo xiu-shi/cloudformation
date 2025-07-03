@@ -128,16 +128,28 @@ Resources:
       SubnetId: !Ref PublicSubnet2B
       RouteTableId: !Ref PublicRouteTable
 
-  # Bastion EC2 Stack
+  # Bastion Host Stack Logical Resource
   BastionStack:
-    Type: "AWS::EC2::Stack"
+    Type: "AWS::EC2::Instance"
     Properties:
       InstanceType: "t2.micro"
-      KeyName: !Ref KeyName
-      ImageId: ami-000
-      SubnetId: !Ref PublicSubnet2A # Replace with your key pair name
+      KeyName: bastion_key_pair # your EC2 key pair name
+      ImageId: ami-0fab1b527ffa9b942
+      SubnetId: !Ref PublicSubnet1A
       SecurityGroupIds:
         - !Ref BastionSecurityGroup
       Tags:
         - Key: "Name"
           Value: "BastionHost"
+
+  # Bastion Security Group
+  BastionSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "Enable SSH"
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          FromPort: 22
+          ToPort: 22
+          CidrIp: "86.45.99.68/32" # Your IP address
