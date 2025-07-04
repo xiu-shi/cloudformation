@@ -38,6 +38,8 @@ Resources:
         - "arn:aws:iam::aws:policy/PowerUserAccess"
 
   # S3 Custom Policy
+
+
   MyIAMPolicy:
     Type: "AWS::IAM::Policy"
     Properties:
