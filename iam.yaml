@@ -37,9 +37,15 @@ Resources:
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/PowerUserAccess"
 
-  # S3 Custom Policy
-
-
+  # S3 Custom Policy  UserToGroup:
+    Properties:
+      Users:
+        - !Ref MyIAMUser        MyIAMPolicy:
+          Properties:
+            PolicyDocument:
+              # ...
+              Roles:
+                - !Ref MyIAMRole
   MyIAMPolicy:
     Type: "AWS::IAM::Policy"
     Properties:
