@@ -1,11 +1,5 @@
-###
-
-#My copy
-
-# CloudFomration template for VPC
 AWSTemplateFormatVersion: "2010-09-09"
-Description: "CloudFormation template for VPC"
-
+Description: "Cloudformation template for VPC"
 Resources:
   MyVPC:
     Type: "AWS::EC2::VPC"
@@ -15,21 +9,21 @@ Resources:
       EnableDnsHostnames: true
       Tags:
         - Key: "Name"
-          Value: "MyVPC"
+          Value: "jxs-vpc01-yaml"
 
-  #Public Subnet , AZ1
-  PublicSubnet2A:
+  # Public Subnet - based on the architecture drawing - AZ1
+  PublicSubnet1A:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref MyVPC
-      CidrBlock: "172.17.0.0/24"
+      CidrBlock: "172.16.0.0/24"
       AvailabilityZone: !Select [0, !GetAZs ""]
       MapPublicIpOnLaunch: true
       Tags:
         - Key: "Name"
           Value: "PublicSubnet1A"
 
-  #Private App Subnet 1A,AZ1
+  # Private Subnet 1A - based on the architecture drawing - AZ1 EC2App1
   AppPrivateSubnet1A:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -40,8 +34,8 @@ Resources:
         - Key: "Name"
           Value: "AppPrivateSubnet1A"
 
-  #Private Data Subnet 1A, AZ1
-  DataPrivateSubnet1A:
+  # Private Subnet 1B - based on the architecture drawing - AZ1 EC2App2
+  AppPrivateSubnet1B:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref MyVPC
@@ -49,163 +43,38 @@ Resources:
       AvailabilityZone: !Select [0, !GetAZs ""]
       Tags:
         - Key: "Name"
-          Value: "DataPrivateSubnet1A"
+          Value: "AppPrivateSubnet1B"
 
-  #Public Subnet 2B, 2AZ
-  PublicSubnet2B:
+  # Public Subnet - based on the architecture drawing - AZ2
+  PublicSubnet2A:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref MyVPC
-      CidrBlock: "172.16.4.0/24"
+      CidrBlock: "172.16.10.0/24"
       AvailabilityZone: !Select [1, !GetAZs ""]
       MapPublicIpOnLaunch: true
       Tags:
         - Key: "Name"
-          Value: "PublicSubnet2B"
+          Value: "PublicSubnet2A"
 
-  #Private App Subnet 2B, 2AZ
+  # Private Subnet 2A - based on the architecture drawing - AZ2 EC2App1
+  AppPrivateSubnet2A:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      VpcId: !Ref MyVPC
+      CidrBlock: "172.16.11.0/24"
+      AvailabilityZone: !Select [1, !GetAZs ""]
+      Tags:
+        - Key: "Name"
+          Value: "AppPrivateSubnet2A"
+
+  # Private Subnet 2B - based on the architecture drawing - AZ2 EC2App2
   AppPrivateSubnet2B:
     Type: "AWS::EC2::Subnet"
     Properties:
       VpcId: !Ref MyVPC
-      CidrBlock: "172.16.5.0/24"
+      CidrBlock: "172.16.12.0/24"
       AvailabilityZone: !Select [1, !GetAZs ""]
       Tags:
         - Key: "Name"
           Value: "AppPrivateSubnet2B"
-
-  #Private Data Subnet 2B, 2AZ
-  DataPrivateSubnet2B:
-    Type: "AWS::EC2::Subnet"
-    Properties:
-      VpcId: !Ref MyVPC
-      CidrBlock: "172.16.6.0/24"
-      AvailabilityZone: !Select [1, !GetAZs ""]
-      Tags:
-        - Key: "Name"
-          Value: "DataPrivateSubnet2B"
-
-  #Internet Gateway
-  InternetGateway:
-    Type: "AWS::EC2::InternetGateway"
-    Properties:
-      Tags:
-        - Key: "Name"
-          Value: "MyVPC-IGW"
-
-  # Attach Internet Gateway to VPC
-  AttachInternetGateway:
-    Type: "AWS::EC2::VPCGatewayAttachment"
-    Properties:
-      VpcId: !Ref MyVPC
-      InternetGatewayId: !Ref InternetGateway
-
-  # Public Route Table
-  PublicRouteTable:
-    Type: "AWS::EC2::RouteTable"
-    Properties:
-      VpcId: !Ref MyVPC
-      Tags:
-        - Key: "Name"
-          Value: "PublicRouteTable"
-
-  # Public Routes
-  PublicRoute:
-    Type: "AWS::EC2::Route"
-    DependsOn: AttachInternetGateway # *Ensure DependsOn is set to attach the Internet Gateway first*
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: "0.0.0.0/0"
-      GatewayId: !Ref InternetGateway
-
-  # Public Subnet Association
-  PublicSubnet1ARouteTableAssociation:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties:
-      SubnetId: !Ref PublicSubnet2A
-      RouteTableId: !Ref PublicRouteTable
-
-  ##* Public Subnet 2B Route Table Association
-  #*PublicSubnet2BRouteTableAssociation:
-  #*Type: "AWS::EC2::SubnetRouteTableAssociation"
-  #*Properties:
-  #*SubnetId: !Ref PublicSubnet2B
-  #*RouteTableId: !Ref PublicRouteTable
-
-  # Bastion Host Stack Logical Resource
-  BastionStack:
-    Type: "AWS::EC2::Instance"
-    Properties:
-      InstanceType: "t2.micro"
-      KeyName: bastion_key_pair # your EC2 key pair name
-      ImageId: ami-0fab1b527ffa9b942
-      #* PublicSubnet 2A
-      SubnetId: !Ref PublicSubnet2A
-      SecurityGroupIds:
-        - !Ref BastionSecurityGroup
-      Tags:
-        - Key: "Name"
-          Value: "BastionHost"
-
-  # Bastion Security Group Logical Resource
-  BastionSecurityGroup:
-    Type: "AWS::EC2::SecurityGroup"
-    Properties:
-      GroupDescription: "Enable SSH access"
-      VpcId: !Ref MyVPC
-      SecurityGroupIngress:
-        - IpProtocol: "tcp"
-          FromPort: 22
-          ToPort: 22
-          CidrIp: "86.45.99.68/32" # Your IP address
-
-  # AppInstance1A
-  AppInstance1A:
-    Type: "AWS::EC2::Instance"
-    Properties:
-      InstanceType: "t2.micro"
-      KeyName: bastion_key_pair # your EC2 key pair name
-      ImageId: ami-0fab1b527ffa9b942
-      SubnetId: !Ref AppPrivateSubnet1A
-      SecurityGroupIds:
-        - !Ref AppInstance1ASG
-      Tags:
-        - Key: Name
-          Value: App1
-
-  # AppInstance2B
-  AppInstance2B:
-    Type: "AWS::EC2::Instance"
-    Properties:
-      InstanceType: "t2.micro"
-      ImageId: ami-0fab1b527ffa9b942
-      SubnetId: !Ref AppPrivateSubnet2B
-      SecurityGroupIds:
-        - !Ref AppInstance2BSG
-      Tags:
-        - Key: Name
-          Value: App2
-
-  # SG App 1A
-  AppInstance1ASG:
-    Type: "AWS::EC2::SecurityGroup"
-    Properties:
-      GroupDescription: "Allow SSH from Bastion"
-      VpcId: !Ref MyVPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          SourceSecurityGroupId: !Ref BastionSecurityGroup
-
-  # SG App 2B
-  AppInstance2BSG:
-    Type: "AWS::EC2::SecurityGroup"
-    Properties:
-      GroupDescription: "Allow ICMP Ping from APp1"
-      VpcId: !Ref MyVPC
-      SecurityGroupIngress:
-        - IpProtocol: icmp
-          FromPort: -1
-          ToPort: -1
-          SourceSecurityGroupId: !Ref AppInstance1ASG
