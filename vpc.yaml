@@ -11,7 +11,6 @@ Resources:
         - Key: "Name"
           Value: "jxs-vpc01-yaml"
 
-  # Public Subnet - based on the architecture drawing - AZ1
   PublicSubnet1A:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -23,7 +22,6 @@ Resources:
         - Key: "Name"
           Value: "PublicSubnet1A"
 
-  # Private Subnet 1A - based on the architecture drawing - AZ1 EC2App1
   AppPrivateSubnet1A:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -34,7 +32,6 @@ Resources:
         - Key: "Name"
           Value: "AppPrivateSubnet1A"
 
-  # Private Subnet 1B - based on the architecture drawing - AZ1 EC2App2
   AppPrivateSubnet1B:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -45,7 +42,6 @@ Resources:
         - Key: "Name"
           Value: "AppPrivateSubnet1B"
 
-  # Public Subnet - based on the architecture drawing - AZ2
   PublicSubnet2A:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -57,7 +53,6 @@ Resources:
         - Key: "Name"
           Value: "PublicSubnet2A"
 
-  # Private Subnet 2A - based on the architecture drawing - AZ2 EC2App1
   AppPrivateSubnet2A:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -68,7 +63,6 @@ Resources:
         - Key: "Name"
           Value: "AppPrivateSubnet2A"
 
-  # Private Subnet 2B - based on the architecture drawing - AZ2 EC2App2
   AppPrivateSubnet2B:
     Type: "AWS::EC2::Subnet"
     Properties:
@@ -78,3 +72,68 @@ Resources:
       Tags:
         - Key: "Name"
           Value: "AppPrivateSubnet2B"
+
+  MyInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+    Properties:
+      Tags:
+        - Key: "Name"
+          Value: "jxs-igw01-yaml"
+
+  AttachGateway:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      VpcId: !Ref MyVPC
+      InternetGatewayId: !Ref MyInternetGateway
+
+  PublicRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: "Name"
+          Value: "PublicRouteTable"
+
+  PublicRoute:
+    Type: "AWS::EC2::Route"
+    DependsOn: AttachGateway
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref MyInternetGateway
+
+  PublicSubnet1ARouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnet1A
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicSubnet2ARouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref PublicSubnet2A
+      RouteTableId: !Ref PublicRouteTable
+
+  AppPrivateSubnet1ARouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref AppPrivateSubnet1A
+      RouteTableId: !Ref PublicRouteTable
+
+  AppPrivateSubnet1BRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref AppPrivateSubnet1B
+      RouteTableId: !Ref PublicRouteTable
+
+  AppPrivateSubnet2ARouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref AppPrivateSubnet2A
+      RouteTableId: !Ref PublicRouteTable
+
+  AppPrivateSubnet2BRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties:
+      SubnetId: !Ref AppPrivateSubnet2B
+      RouteTableId: !Ref PublicRouteTable
