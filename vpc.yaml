@@ -1,5 +1,6 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: "Cloudformation template for VPC"
+
 Resources:
   MyVPC:
     Type: "AWS::EC2::VPC"
@@ -86,6 +87,7 @@ Resources:
       VpcId: !Ref MyVPC
       InternetGatewayId: !Ref MyInternetGateway
 
+  # Route table for public internet access
   PublicRouteTable:
     Type: "AWS::EC2::RouteTable"
     Properties:
@@ -102,6 +104,16 @@ Resources:
       DestinationCidrBlock: "0.0.0.0/0"
       GatewayId: !Ref MyInternetGateway
 
+  # Route table for remaining subnets (no default route)
+  PrivateRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: "Name"
+          Value: "PrivateRouteTable"
+
+  # Associations
   PublicSubnet1ARouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
@@ -112,28 +124,28 @@ Resources:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       SubnetId: !Ref PublicSubnet2A
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref PrivateRouteTable
 
   AppPrivateSubnet1ARouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       SubnetId: !Ref AppPrivateSubnet1A
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref PrivateRouteTable
 
   AppPrivateSubnet1BRouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       SubnetId: !Ref AppPrivateSubnet1B
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref PrivateRouteTable
 
   AppPrivateSubnet2ARouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       SubnetId: !Ref AppPrivateSubnet2A
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref PrivateRouteTable
 
   AppPrivateSubnet2BRouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
     Properties:
       SubnetId: !Ref AppPrivateSubnet2B
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref PrivateRouteTable
