@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Create RDS Instance with MySQL"
+
+Parameters:
+  MyVPC:
+    Type: AWS::EC2::VPC::Id
+    Description: "VPC ID where the RDS instance will be deployed"
+
+##aws cloudformation create-stack \
+##  --stack-name rds-stack \
+##  --template-body file://rds.yaml \
+##  --parameters ParameterKey=MyVPC,ParameterValue=vpc-061399ed9e1b333ac
+
+Resources:
+  RDSSecurityGroup:
+    Type: "AWS::EC2::SecurityGroup"
+    Properties:
+      GroupDescription: "RDS Security Group"
+      VpcId: !Ref MyVPC
+      SecurityGroupIngress:
+        - IpProtocol: "tcp"
+          FromPort: 3306
+          ToPort: 3306
+          CidrIp: 86.45.99.68/32
+
+  MyRDSInstance:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      DBInstanceIdentifier: "jxs-rds-instance"
+      AllocatedStorage: "20"
+      DBInstanceClass: "db.t3.micro"
+      Engine: "MySQL"
+      EngineVersion: "8.0" # Specify the current valid MySQL version
+      MasterUsername: "admin"
+      MasterUserPassword: "password1234" # Change this to a secure password
+      BackupRetentionPeriod: 7
+      VPCSecurityGroups:
+        - !Ref RDSSecurityGroup
