@@ -174,7 +174,7 @@ Resources:
         - IpProtocol: "tcp"
           FromPort: 22
           ToPort: 22
-          CidrIp: 86.45.99.68/32
+          CidrIp: # Replace with your IP or CIDR block
 
   # AppInstance1A - App1
   AppInstance1A:
